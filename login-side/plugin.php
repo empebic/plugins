@@ -196,3 +196,66 @@ function custom_login_endpoint_callback()
 	$endpoint = get_option('custom_login_endpoint');
 	echo '<input type="text" name="custom_login_endpoint" value="' . esc_attr($endpoint) . '" />';
 }
+
+/**
+ * Shortcode function to display the reset password form.
+ *
+ * This function generates the HTML and JavaScript for the reset password form.
+ * It includes an AJAX request to send the email address to the custom API endpoint.
+ *
+ * @return string The HTML content of the reset password form.
+ */
+function reset_password_shortcode() {
+    ob_start();
+    ?>
+    <div id="reset-password-container">
+        <form id="reset-password-form" action="" method="post">
+            <label for="email">Enter your email address:</label>
+            <input type="email" id="email" name="email" required>
+            <button type="submit">Send Password Reset Link</button>
+            <div id="response-message"></div>
+        </form>
+    </div>
+    <script type="text/javascript">
+        jQuery(document).ready(function($) {
+            // Handle form submission
+            $('#reset-password-form').on('submit', function(e) {
+                e.preventDefault();
+
+                var email = $('#email').val();
+                var responseMessage = $('#response-message');
+
+                // Send AJAX request to the custom API endpoint
+                $.ajax({
+                    url: 'http://wp2.local/wp-json/custom-api/v1/reset-password', // Replace with your actual endpoint
+                    method: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify({
+                        email: email
+                    }),
+                    success: function(response) {
+                        // Handle successful response
+                        if (response && response.message) {
+                            responseMessage.text(response.message);
+                            responseMessage.css('color', 'green');
+                        } else {
+                            responseMessage.text('Unexpected response');
+                            responseMessage.css('color', 'red');
+                        }
+                    },
+                    error: function(xhr) {
+                        // Handle error response
+                        var errorMessage = 'An error occurred: ' + (xhr.responseJSON && xhr.responseJSON.message ? xhr.responseJSON.message : 'Please try again later.');
+                        responseMessage.text(errorMessage);
+                        responseMessage.css('color', 'red');
+                    }
+                });
+            });
+        });
+    </script>
+    <?php
+    return ob_get_clean();
+}
+
+// Register the reset_password_form shortcode
+add_shortcode('reset_password_form', 'reset_password_shortcode');

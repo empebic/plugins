@@ -134,3 +134,68 @@ function decrypt($encrypted)
 	// Decrypt the ciphertext
 	return openssl_decrypt($ciphertext, ENCRYPTION_METHOD, ENCRYPTION_KEY, 0, $iv);
 }
+
+/**
+ * Registers the custom REST API endpoint for password reset.
+ */
+function register_reset_password_endpoint()
+{
+	// Register a new REST route for password reset
+	register_rest_route('custom-api/v1', '/reset-password', array(
+		'methods' => 'POST', // HTTP method for the endpoint
+		'callback' => 'handle_reset_password_request', // Callback function to handle the request
+		'permission_callback' => '__return_true', // Permission callback to allow access
+	));
+}
+add_action('rest_api_init', 'register_reset_password_endpoint');
+
+/**
+ * Handles the password reset request.
+ *
+ * @param WP_REST_Request $request The REST request object.
+ * @return WP_REST_Response|WP_Error The response object or WP_Error on failure.
+ */
+function handle_reset_password_request($request)
+{
+	// Sanitize the email parameter from the request
+	$email = sanitize_email($request->get_param('email'));
+
+	// Check if the email is valid
+	if (!is_email($email)) {
+		return new WP_Error('invalid_email', 'Invalid email address', array('status' => 400));
+	}
+
+	// Get the user by email
+	$user = get_user_by('email', $email);
+
+	// Check if the user exists
+	if (!$user) {
+		return new WP_Error('user_not_found', 'No user found with this email address', array('status' => 404));
+	}
+
+	// Generate a password reset key for the user
+	$key = get_password_reset_key($user);
+
+	// Check if there was an error generating the key
+	if (is_wp_error($key)) {
+		return $key;
+	}
+
+	// Generate the password reset link
+	$reset_link = network_site_url("wp-login.php?action=rp&key=$key&login=" . rawurlencode($user->user_login), 'login');
+	$subject = 'Password Reset Request'; // Email subject
+	$message = 'To reset your password, visit the following address: ' . $reset_link; // Email message
+
+	// Send the password reset email
+	$mail_sent = wp_mail($email, $subject, $message);
+
+	// Check if the email was sent successfully
+	if ($mail_sent) {
+		return new WP_REST_Response(array(
+			'status' => 'success',
+			'message' => 'Password reset email sent successfully',
+		), 200);
+	} else {
+		return new WP_Error('mail_error', 'Failed to send password reset email', array('status' => 500));
+	}
+}
