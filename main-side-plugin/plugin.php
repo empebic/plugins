@@ -42,11 +42,6 @@ function custom_login_rest_api_handler(WP_REST_Request $request)
 		), 200); // Return failure status if authentication failed
 	}
 
-	// If authentication is successful, return user info and encrypted email
-	$encryption_secret = get_option('custom_login_encryption_secret');
-	if (!$encryption_secret) {
-		return new WP_REST_Response('Encryption secret not set.', 500); // Return error if encryption secret is not set
-	}
 
 	// Encrypt the email to generate a token
 	$token = encrypt($email);
@@ -67,7 +62,6 @@ function auto_login_user_from_email()
 	// Check if the login token is present in the URL
 	if (isset($_GET['logintoken'])) {
 		$token = $_GET['logintoken']; // Retrieve the token from the URL
-		$encryption_secret = get_option('custom_login_encryption_secret'); // Get the encryption secret
 		$email = decrypt($token); // Decrypt the token to get the email
 
 		// Validate the email
