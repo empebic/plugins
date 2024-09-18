@@ -250,7 +250,7 @@ function reset_password_shortcode()
 					},
 					error: function (xhr) {
 						// Handle error response
-						var errorMessage = 'An error occurred: ' + (xhr.responseJSON && xhr.responseJSON.message ? xhr.responseJSON.message : 'Please try again later.');
+						var errorMessage = 'If the email is found you will receive an email, if not please ensure that you\'re using the same email you used for signup.';
 						responseMessage.text(errorMessage);
 						responseMessage.css('color', 'red');
 					}
