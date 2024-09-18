@@ -164,7 +164,7 @@ function handle_reset_password_request($request)
 
 	// Check if the user exists
 	if (!$user) {
-		return new WP_Error('user_not_found', 'No user found with this email address', array('status' => 404));
+		return new WP_Error('mail_error', 'Failed to send password reset email', array('status' => 400));
 	}
 
 	// Generate a password reset key for the user
