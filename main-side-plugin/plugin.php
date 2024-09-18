@@ -39,7 +39,7 @@ function custom_login_rest_api_handler(WP_REST_Request $request)
 	if (is_wp_error($user)) {
 		return new WP_REST_Response(array(
 			'status' => 'fail',
-		), 200); // Return failure status if authentication failed
+		), 500); // Return failure status if authentication failed
 	}
 
 
@@ -173,6 +173,11 @@ function handle_reset_password_request($request)
 	// Check if there was an error generating the key
 	if (is_wp_error($key)) {
 		return $key;
+	// Log the error to the WP debug log
+	if (is_wp_error($key)) {
+		error_log('Password reset key generation error for user: ' . $user->ID . ' - ' . $key->get_error_message());
+		return $key;
+	}
 	}
 
 	// Generate the password reset link
@@ -190,6 +195,6 @@ function handle_reset_password_request($request)
 			'message' => 'Password reset email sent successfully',
 		), 200);
 	} else {
-		return new WP_Error('mail_error', 'Failed to send password reset email', array('status' => 500));
+		return new WP_Error('mail_error', 'Failed to send password reset email', array('status' => 400));
 	}
 }
